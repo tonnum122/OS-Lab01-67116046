@@ -1,0 +1,21 @@
+======================================================
+COE67-222 Operating Systems - Lab 03 Report
+Name: [kritchanon Na pankaew]
+Student ID: 67116046
+======================================================
+1. The Race Condition (Phase 2):
+สาเหตุที่ค่า final weight ได้น้อยกว่าค่า expected value (200) เกิดจากการทำงานแบบ Read-Modify-Write บนตัวแปร shared_weight ไม่ได้เป็น Atomic Operation เมื่อ Thread หนึ่งอ่านค่าไปแล้ว OS Scheduler ได้ทำการ Preempt หรือสลับ Context ให้ Thread ที่สองเข้ามาอ่านค่าเดิมก่อนที่ Thread แรกจะบวกค่าและเขียนกลับลงหน่วยความจำ ส่งผลให้ผลการอัปเดตของ Thread หนึ่งถูกเขียนทับและสูญหายไป (Lost Update)
+
+2. Mutex vs. Semaphore (Phase 3):
+- หน้าที่ของ Mutex: ทำหน้าที่เป็นกุญแจล็อกเพื่อรับประกัน Mutual Exclusion ใน Critical Section เพื่อให้มีเพียง Thread เดียว (ไม่ว่าจะเป็น Producer หรือ Consumer) เข้าถึงและแก้ไข buffer, in_index หรือ out_index ได้ในเวลาเดียวกัน
+- หน้าที่ของ empty และ full semaphores: ทำหน้าที่เป็น Counting Semaphore เพื่อใช้ในการ Sync จังหวะการทำงานและการส่งสัญญาณ (Signaling) โดย empty คอยนับจำนวนช่องว่างที่เหลือ และ full คอยนับจำนวนไอเทมที่มีอยู่ในบัฟเฟอร์
+- เหตุผลที่ไม่สามารถใช้เฉพาะ Mutex ได้: เพราะ Mutex เป็นเพียง Binary Lock (0 หรือ 1) ไม่สามารถนับจำนวนทรัพยากร (Resource Counting) หรือส่งสัญญาณระงับ/ปลุกการทำงานของ Thread เมื่อบัฟเฟอร์เต็มหรือว่างได้
+
+3. Deadlock Awareness:
+หากสลับลำดับเป็น:
+    mutex.acquire()
+    empty.acquire()
+ในกรณีที่บัฟเฟอร์เต็ม (empty = 0):
+- Producer จะเข้าถือครอง Mutex สำเร็จ จากนั้นจะติด Block ที่ empty.acquire() เพราะไม่มีช่องว่างเหลือ
+- ในขณะเดียวกัน Consumer ต้องการเข้ามาดึงข้อมูลเพื่อทำให้เกิดช่องว่าง แต่ Consumer จะติด Block อยู่ที่ mutex.acquire() เพราะ Producer ถือ Mutex ค้างไว้อยู่
+- ผลลัพธ์: ทั้งสองฝ่ายต่างรอทรัพยากรซึ่งกันและกัน (Producer ถือ Lock รอ Slot ว่าง ส่วน Consumer รอ Lock เพื่อปล่อย Slot ว่าง) นำไปสู่สภาวะ Deadlock ที่ระบบค้างและไม่สามารถทำงานต่อได้
