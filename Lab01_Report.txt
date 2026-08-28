@@ -1,16 +1,15 @@
-======================================================
-COE67-XXX Operating Systems - Lab 01 Report
-Name: 
-Student ID: 
-======================================================
+=== Lab 1 Report: System Profiling ===
 
 1. Hardware Baseline:
-- OS Version:
-- Number of CPU Cores:
-- Total RAM:
+- OS Version: Linux 6.8.0-1052-azure (Ubuntu 22.04.1 LTS x86_64)
+- CPU Model: AMD EPYC 7763 64-Core Processor
+- Number of CPU Cores: 2 Cores
+- Total RAM: 7.76 GB
 
-2. Observation (from htop during stress test):
-[Write your answer here]
+2. Observation:
+ระหว่างรันไฟล์ stress_test.py พบว่าโปรแกรมใช้งาน CPU เพียง 1 Core เท่านั้นที่พุ่งขึ้นไปทำงานเกือบ 100% (Core 1) โดยที่อีก Core หนึ่งไม่ได้ถูกดึงไปประมวลผลเต็มที่ เนื่องจากตัวแปลภาษา Python มีข้อจำกัดการทำงานแบบ Single-thread (Global Interpreter Lock - GIL) ในหนึ่งโปรเซส เมื่อกดปุ่ม Ctrl + C เพื่อหยุดการทำงาน ระบบปฏิบัติการ (OS) ได้ทำการเรียกคืนทรัพยากร CPU ทันที ส่งผลให้การใช้งาน CPU ใน htop ลดกลับมาอยู่ในระดับปกติ
 
 3. Analysis:
-[Write your answer here]
+ในการเทรนโมเดล Machine Learning กับชุดข้อมูลภาพขนาด 500,000 ภาพ การทราบข้อจำกัดของ OS Memory และจำนวน CPU Cores มีความสำคัญดังนี้:
+- ด้าน Memory: การโหลดภาพทั้งหมด 500,000 ภาพเข้าสู่ RAM พร้อมกันจะทำให้ขนาดหน่วยความจำ 7.76 GB ไม่เพียงพอ และเกิดข้อผิดพลาด Out of Memory (OOM) จนระบบหยุดทำงาน จึงจำเป็นต้องออกแบบ Data Pipeline ให้โหลดข้อมูลแบบชุดย่อย (Mini-batch / DataLoader) หรือใช้ Data Streaming
+- ด้าน CPU Cores: การเตรียมข้อมูลภาพ (Preprocessing และ Data Augmentation) ต้องอาศัย CPU การทราบจำนวนคอร์ที่แท้จริง (2 Cores) ช่วยให้สามารถกำหนดจำนวนกระบวนการทำงานคู่ขนาน (num_workers) ใน DataLoader ได้อย่างเหมาะสม เพื่อไม่ให้เกิด Overhead เกินขีดจำกัดของระบบปฏิบัติการ
