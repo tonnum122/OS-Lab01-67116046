@@ -1,0 +1,18 @@
+======================================================
+COE67-222 Operating Systems - Lab 02 Report
+Name: [kritchanon Na pankaew]
+Student ID: 67116046
+======================================================
+1. Execution Time Comparison:
+- Sequential Time: 8.91 seconds
+- Multithreading Time: 8.94 seconds
+- Multiprocessing Time: 8.20 seconds
+
+2. System Observation (htop):
+- Multithreading: ใน htop พบว่ามีการใช้งาน CPU เพียง 1 Core ที่พุ่งขึ้นไปทำงานเกือบ 100% สลับกันไปมา โดยที่อีก Core หนึ่งไม่ได้ถูกดึงมาร่วมประมวลผลอย่างเต็มที่
+- Multiprocessing: ใน htop พบว่า CPU ทั้ง 2 Cores พุ่งขึ้นไปทำงานพร้อมกันที่ 100% เต็มพิกัด เนื่องจากระบบปฏิบัติการสามารถกระจายการทำงานของแต่ละ Process แยกคอร์กันได้อย่างแท้จริง
+
+3. Analysis (The GIL & Zombie Process):
+- เหตุผลที่ Multithreading ไม่ทำให้โค้ดเร็วขึ้น: งานประเภท CPU-bound ติดข้อจำกัดของ Global Interpreter Lock (GIL) ใน Python ซึ่งอนุญาตให้มีเพียง Thread เดียวประมวลผล Bytecode ได้ในขณะใดขณะหนึ่ง ทำให้ไม่สามารถประมวลผลแบบคู่ขนาน (Parallel Execution) บนหลาย Core พร้อมกันได้
+- เหตุผลที่ Multiprocessing เหมาะสมกับงาน CPU-bound (เช่น ML Data Augmentation): แต่ละ Process จะมี Python Interpreter, หน่วยความจำ (Memory Space) และ GIL แยกจากกันอย่างอิสระ ทำให้ OS Scheduler สามารถกระจายงานไปประมวลผลขนานกันบนทุก CPU Cores ได้จริง
+- ปัญหา Zombie Process: เกิดขึ้นเมื่อ Parent Process ทำการ fork() สร้าง Child Process แล้ว Child จบการทำงานไป แต่ Parent ไม่ได้เรียก System Call os.wait() เพื่อรับสถานะการสิ้นสุด ทำให้ OS ยังคงต้องเก็บ Entry และ PID ของ Child ไว้ใน Process Table จนกว่า Parent จะสิ้นสุดการทำงาน
